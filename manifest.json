@@ -1,0 +1,26 @@
+// FILE 1: manifest.json
+{
+  "name": "Nifty Oracle Pro",
+  "short_name": "NiftyOracle",
+  "description": "Real-time Indian Stock Market AI Analysis",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0B0C10",
+  "theme_color": "#00D68F",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzBCMEMxMCIvPjxwYXRoIGQ9Ik0yMzYgMTAwaDQwdjMxMmgtNDB6IiBmaWxsPSIjMDBENjhGIi8+PHJlY3QgeD0iMTg2IiB5PSIyMDAiIHdpZHRoPSIxNDAiIGhlaWdodD0iMTUwIiByeD0iMTYiIGZpbGw9IiMwMEQ2OEYiLz48L3N2Zz4=",
+      "sizes": "72x72 96x96 128x128 144x144 152x152 192x192 384x384 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance"],
+  "lang": "en-IN",
+  "shortcuts": [
+    {"name": "Nifty 50", "url": "./index.html#nifty"},
+    {"name": "Top Gainers", "url": "./index.html#gainers"},
+    {"name": "My Watchlist", "url": "./index.html#watchlist"}
+  ]
+}
