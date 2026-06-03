@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#00D68F">
-  <title>Nifty Oracle Pro</title>
+  <title>Nifty Oracle Pro - LIVE</title>
   <link rel="manifest" href="./manifest.json">
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -15,74 +15,312 @@
       --bg-primary: #0B0C10; --bg-surface: #1A1D27; --bg-elevated: #242838;
       --border: #2E3347; --text-primary: #FFFFFF; --text-secondary: #8892A4;
       --text-disabled: #4A5568; --accent-bull: #00D68F; --accent-bear: #FF4757;
-      --accent-neutral: #718096; --accent-gold: #FFD700; --accent-blue: #4ECDC4;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
-    body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--bg-primary); color: var(--text-primary); overscroll-behavior: none; }
+    body { font-family: -apple-system, Roboto, sans-serif; background: var(--bg-primary); color: var(--text-primary); }
     
-    /* Layout */
     .app-container { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    .content-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 70px; }
-    .content-area::-webkit-scrollbar { display: none; }
-    
-    /* Nav */
-    .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: rgba(26, 29, 39, 0.9); backdrop-filter: blur(10px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-    .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-secondary); font-size: 11px; cursor: pointer; transition: 150ms fade; width: 20%; }
-    .nav-item.active { color: var(--accent-bull); }
-    .nav-icon { font-size: 20px; margin-bottom: 2px; }
-    
-    /* Components */
+    .content-area { flex: 1; overflow-y: auto; padding-bottom: 70px; }
     .header { padding: 16px; position: sticky; top: 0; background: var(--bg-primary); z-index: 100; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-    .card { background: var(--bg-surface); border-radius: 16px; padding: 16px; margin: 12px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 1px solid var(--border); }
-    .ticker { white-space: nowrap; overflow: hidden; font-size: 12px; color: var(--text-secondary); background: var(--bg-elevated); padding: 8px 0; }
-    .ticker-content { display: inline-block; animation: scroll 20s linear infinite; }
-    @keyframes scroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+    .card { background: var(--bg-surface); border-radius: 12px; padding: 16px; margin: 12px 16px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     
     .text-bull { color: var(--accent-bull); } .text-bear { color: var(--accent-bear); }
-    .badge { padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
-    .badge-bull { background: rgba(0, 214, 143, 0.1); color: var(--accent-bull); border: 1px solid var(--accent-bull); box-shadow: 0 0 8px rgba(0,214,143,0.3); }
-    .badge-bear { background: rgba(255, 71, 87, 0.1); color: var(--accent-bear); border: 1px solid var(--accent-bear); box-shadow: 0 0 8px rgba(255,71,87,0.3); }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; border: 1px solid currentColor; }
     
-    .scroll-x { display: flex; overflow-x: auto; gap: 12px; padding: 0 16px 12px; scroll-snap-type: x mandatory; }
-    .scroll-x::-webkit-scrollbar { display: none; }
-    .chip { padding: 8px 16px; background: var(--bg-elevated); border-radius: 20px; font-size: 13px; white-space: nowrap; scroll-snap-align: start; }
-    .chip.active { background: var(--accent-bull); color: var(--bg-primary); }
+    .stock-card { display: flex; flex-direction: column; gap: 8px; position: relative; }
+    .stock-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .stock-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+    .stock-price { font-size: 18px; font-weight: bold; text-align: right; }
     
-    .stock-card { display: flex; flex-direction: column; gap: 8px; position: relative; overflow: hidden; }
-    .stock-header { display: flex; justify-content: space-between; align-items: center; }
-    .stock-title { font-size: 15px; font-weight: 600; }
-    .stock-price { font-size: 16px; font-weight: bold; }
-    .progress-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin: 4px 0; }
+    .progress-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin: 8px 0; }
     .progress-fill { height: 100%; background: var(--accent-bull); transition: width 0.3s; }
     
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .live-indicator { display: inline-block; width: 8px; height: 8px; background: red; border-radius: 50%; margin-right: 6px; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     
-    /* Full Screen Detail */
-    .detail-view { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg-primary); z-index: 2000; display: flex; flex-direction: column; overflow-y: auto; transform: translateX(100%); transition: transform 0.3s ease-out; }
-    .detail-view.open { transform: translateX(0); }
-    .chart-container { width: 100%; height: 280px; position: relative; background: var(--bg-primary); touch-action: pan-y; }
-    canvas { display: block; width: 100%; height: 100%; }
-    
-    /* Modals */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .modal { background: var(--bg-surface); border-radius: 16px; padding: 24px; max-width: 400px; width: 100%; border: 1px solid var(--border); }
-    .btn { display: block; width: 100%; padding: 14px; background: var(--accent-bull); color: var(--bg-primary); text-align: center; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 16px; cursor: pointer; border: none; }
+    .error-box { background: rgba(255, 71, 87, 0.1); border: 1px solid var(--accent-bear); padding: 12px; margin: 16px; border-radius: 8px; color: #fff; font-size: 13px; }
   </style>
 </head>
 <body>
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useRef, useMemo } = React;
+    const { useState, useEffect, useRef } = React;
 
-    // --- DB & CACHE LAYER ---
-    const DB_NAME = 'NiftyOracleDB';
-    const DB_VERSION = 3;
-    const dbPromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-      request.onupgradeneeded = (e) => {
-        const db = e.target.result;
+    // 1. QUANT ENGINE WORKER (Calculates actual real indicators)
+    const workerLogic = `
+      function calcEMA(data, period) {
+        if(data.length < period) return data[data.length-1];
+        const k = 2 / (period + 1);
+        let ema = data[0];
+        for(let i = 1; i < data.length; i++) { ema = (data[i] * k) + (ema * (1 - k)); }
+        return ema;
+      }
+      function calcRSI(prices, p = 14) {
+        if(prices.length < p) return 50;
+        let gains = 0, losses = 0;
+        for(let i = prices.length - p; i < prices.length; i++) {
+          let diff = prices[i] - prices[i - 1];
+          if(diff > 0) gains += diff; else losses -= diff;
+        }
+        if(losses === 0) return 100;
+        let rs = (gains/p) / (losses/p);
+        return 100 - (100 / (1 + rs));
+      }
+      function calculateScore(prices, volumes) {
+        if(!prices || prices.length < 20) return { score: 50, signal: 'WAITING FOR DATA', color: '#718096', rsi: 0 };
+        
+        const currentPrice = prices[prices.length - 1];
+        let score = 0;
+        
+        // REAL EMA Calculations
+        const ema20 = calcEMA(prices, 20);
+        const ema50 = calcEMA(prices, 50);
+        if(currentPrice > ema20) score += 20;
+        if(currentPrice > ema50) score += 10;
+        if(ema20 > ema50) score += 15;
+        
+        // REAL RSI Calculation
+        const rsi = calcRSI(prices, 14);
+        if(rsi >= 40 && rsi <= 60) score += 20;
+        else if(rsi < 40) score += 30; // Oversold = Buy signal
+        else if(rsi > 70) score -= 20; // Overbought
+        
+        score = Math.min(100, Math.max(0, score + 10)); // Normalize
+        
+        let signal = 'NEUTRAL', color = '#718096';
+        if(score >= 75) { signal = 'STRONG BUY'; color = '#00D68F'; }
+        else if(score >= 55) { signal = 'BUY'; color = '#00B37A'; }
+        else if(score <= 35) { signal = 'STRONG SELL'; color = '#FF4757'; }
+        else if(score <= 50) { signal = 'SELL'; color = '#E84393'; }
+
+        return { score: Math.round(score), signal, color, rsi: Math.round(rsi) };
+      }
+
+      self.onmessage = (e) => {
+        const { id, prices, volumes } = e.data;
+        try {
+          const result = calculateScore(prices, volumes);
+          self.postMessage({ id, result });
+        } catch(err) {
+          self.postMessage({ id, error: err.message });
+        }
+      };
+    `;
+    const blob = new Blob([workerLogic], {type: 'application/javascript'});
+    const quantWorker = new Worker(URL.createObjectURL(blob));
+
+    const runQuantEngine = (prices, volumes) => {
+      return new Promise((resolve) => {
+        const id = Math.random().toString(36);
+        const handler = (e) => {
+          if(e.data.id === id) {
+            quantWorker.removeEventListener('message', handler);
+            resolve(e.data.result);
+          }
+        };
+        quantWorker.addEventListener('message', handler);
+        quantWorker.postMessage({ id, prices, volumes });
+      });
+    };
+
+    // 2. REAL AGGRESSIVE FETCH LAYER
+    // We use a waterfall of proxies to guarantee the request bypasses browser blocks.
+    const fetchRealData = async (symbol) => {
+      // Get 5 days of 5-minute candles from REAL Yahoo Finance
+      const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=5m&range=5d`;
+      
+      const proxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+      ];
+
+      let lastError = null;
+      for (let proxy of proxies) {
+        try {
+          console.log("Attempting fetch via:", proxy);
+          const res = await fetch(proxy, { cache: 'no-store', mode: 'cors' });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          
+          if (data.chart && data.chart.result && data.chart.result[0]) {
+            const result = data.chart.result[0];
+            
+            // Filter out nulls (Yahoo sometimes returns null prices for halted minutes)
+            const rawPrices = result.indicators.quote[0].close;
+            const rawVolumes = result.indicators.quote[0].volume;
+            
+            const validPrices = [];
+            const validVolumes = [];
+            
+            for(let i=0; i<rawPrices.length; i++) {
+              if(rawPrices[i] !== null && rawPrices[i] > 0) {
+                validPrices.push(rawPrices[i]);
+                validVolumes.push(rawVolumes[i] || 0);
+              }
+            }
+
+            return {
+              symbol,
+              currentPrice: result.meta.regularMarketPrice,
+              previousClose: result.meta.previousClose,
+              timestamp: result.meta.regularMarketTime, // Real Unix Timestamp
+              prices: validPrices,
+              volumes: validVolumes
+            };
+          }
+        } catch(e) {
+          console.warn("Proxy failed, trying next...", e.message);
+          lastError = e.message;
+        }
+      }
+      throw new Error(`All real-time data sources blocked. (${lastError})`);
+    };
+
+    // Main React App
+    const App = () => {
+      const [stocksData, setStocksData] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [errorMsg, setErrorMsg] = useState(null);
+      const [lastUpdateTime, setLastUpdateTime] = useState(null);
+
+      // List of highly liquid Indian Stocks/Indices
+      const watchList = [
+        { sym: '^NSEI', name: 'NIFTY 50' },
+        { sym: '^NSEBANK', name: 'BANK NIFTY' },
+        { sym: 'RELIANCE.NS', name: 'Reliance Ind.' },
+        { sym: 'TCS.NS', name: 'TCS' },
+        { sym: 'HDFCBANK.NS', name: 'HDFC Bank' }
+      ];
+
+      const loadMarketData = async () => {
+        setLoading(true);
+        setErrorMsg(null);
+        const newData = [];
+        let successCount = 0;
+
+        for (let s of watchList) {
+          try {
+            // 1. Fetch real raw data
+            const liveData = await fetchRealData(s.sym);
+            // 2. Pass real arrays to Web Worker for AI Analysis
+            const analysis = await runQuantEngine(liveData.prices, liveData.volumes);
+            
+            newData.push({ ...liveData, name: s.name, analysis });
+            successCount++;
+          } catch(err) {
+            console.error(`Failed to load ${s.sym}:`, err);
+          }
+        }
+
+        if (successCount === 0) {
+          setErrorMsg("Could not connect to financial markets. Proxies may be blocked by your network.");
+        } else {
+          setStocksData(newData);
+          // Format the exact real-world time of the update
+          setLastUpdateTime(new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true }));
+        }
+        setLoading(false);
+      };
+
+      useEffect(() => {
+        // Initial load
+        loadMarketData();
+        // Strict real-time polling every 60 seconds
+        const interval = setInterval(() => { loadMarketData(); }, 60000);
+        return () => clearInterval(interval);
+      }, []);
+
+      return (
+        <div className="app-container">
+          <div className="header">
+            <div>
+              <div style={{fontWeight: 'bold', fontSize: 18}}>Nifty Oracle <span style={{color: 'var(--accent-bull)'}}>PRO</span></div>
+              <div style={{fontSize: 11, color: 'var(--text-secondary)', marginTop: 2}}>
+                {loading ? 'Fetching real-time data...' : (
+                  <><span className="live-indicator"></span>LIVE • Updated: {lastUpdateTime} IST</>
+                )}
+              </div>
+            </div>
+            <button onClick={loadMarketData} style={{background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: 24, cursor: 'pointer'}}>
+              ↻
+            </button>
+          </div>
+
+          <div className="content-area">
+            {errorMsg && (
+              <div className="error-box">
+                <strong>⚠️ Connection Error</strong><br/><br/>
+                {errorMsg}
+              </div>
+            )}
+
+            {stocksData.map(stock => {
+              const isUp = stock.currentPrice >= stock.previousClose;
+              const chg = stock.currentPrice - stock.previousClose;
+              const pct = (chg / stock.previousClose) * 100;
+              
+              return (
+                <div key={stock.symbol} className="card stock-card">
+                  <div className="stock-header">
+                    <div>
+                      <div className="stock-title">{stock.name}</div>
+                      <div style={{fontSize: 12, color: 'var(--text-secondary)'}}>
+                        Vol: {stock.volumes[stock.volumes.length-1].toLocaleString('en-IN')}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="stock-price">₹{stock.currentPrice.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                      <div className={isUp ? 'text-bull' : 'text-bear'} style={{fontSize: 13, fontWeight: 'bold', textAlign: 'right', marginTop: 2}}>
+                        {isUp ? '▲' : '▼'} {Math.abs(chg).toFixed(2)} ({Math.abs(pct).toFixed(2)}%)
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{width: `${stock.analysis.score}%`, background: stock.analysis.color}}></div>
+                  </div>
+                  
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8}}>
+                    <div className="badge" style={{borderColor: stock.analysis.color, color: stock.analysis.color, backgroundColor: `${stock.analysis.color}15`}}>
+                      {stock.analysis.score >= 55 ? '🟢' : '🔴'} {stock.analysis.signal} ({stock.analysis.score}/100)
+                    </div>
+                    <div style={{fontSize: 11, color: 'var(--text-secondary)'}}>
+                      Real RSI: {stock.analysis.rsi}
+                    </div>
+                  </div>
+                  
+                  <div style={{fontSize: 10, color: 'var(--text-disabled)', textAlign: 'right', marginTop: 4}}>
+                    Data timestamp: {new Date(stock.timestamp * 1000).toLocaleTimeString('en-IN')}
+                  </div>
+                </div>
+              );
+            })}
+            
+            {loading && stocksData.length === 0 && !errorMsg && (
+              <div style={{padding: 40, textAlign: 'center', color: 'var(--text-secondary)'}}>
+                <div className="live-indicator" style={{width: 16, height: 16, marginBottom: 16}}></div>
+                <div>Connecting to NSE via Proxy Waterfall...</div>
+                <div style={{fontSize: 12, marginTop: 8}}>Parsing live 5-minute candles...</div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js');
+      });
+    }
+  </script>
+</body>
+</html>        const db = e.target.result;
         if (!db.objectStoreNames.contains('prices')) db.createObjectStore('prices', { keyPath: 'symbol' });
         if (!db.objectStoreNames.contains('watchlist')) db.createObjectStore('watchlist', { keyPath: 'symbol' });
         if (!db.objectStoreNames.contains('alerts')) db.createObjectStore('alerts', { keyPath: 'alertId' });
