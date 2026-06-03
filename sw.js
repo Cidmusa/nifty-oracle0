@@ -1,63 +1,33 @@
 // FILE 2: sw.js
-// HOW TO USE:
-// 1. Save all 3 files (index.html, sw.js, manifest.json) in same folder
-// 2. Open index.html in Chrome/Samsung Internet
-// 3. Tap "Add to Home Screen" when prompted
-// 4. Allow notifications when asked
-// 5. App installs like a native app — done!
-// 
-// WORKS ON: Android Chrome, Samsung Internet
-// LIMITED ON: iPhone Safari (no background alerts)
-// REQUIRES: Internet for live data, works offline with cached data
+// Service Worker - Real caching for PWA
+const CACHE_NAME = 'nifty-oracle-v2-real';
+const STATIC_ASSETS = ['./index.html', './manifest.json'];
 
-const CACHE_NAME = 'nifty-oracle-v1';
-const STATIC_ASSETS = [
-  './index.html',
-  './manifest.json'
-];
-
-// Install Event - Cache Static Assets
 self.addEventListener('install', (e) => {
   self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
+  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)));
 });
 
-// Activate Event - Clean old caches
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      );
+      return Promise.all(keys.map((key) => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      }));
     }).then(() => self.clients.claim())
   );
 });
 
-// Fetch Event - Stale-while-revalidate for API, Cache-first for static
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   
-  // API Calls (Yahoo, NSE, etc.) -> Network First, fallback to Cache
-  if (url.origin !== location.origin && !url.pathname.endsWith('.html')) {
-    e.respondWith(
-      fetch(e.request)
-        .then((response) => {
-          const clonedResponse = response.clone();
-          caches.open('nifty-api-cache').then((cache) => {
-            cache.put(e.request, clonedResponse);
-          });
-          return response;
-        })
-        .catch(() => caches.match(e.request))
-    );
+  // NEVER cache the live API calls (corsproxy, allorigins, yahoo). Always fetch real data.
+  if (url.hostname.includes('yahoo') || url.hostname.includes('cors') || url.hostname.includes('allorigins')) {
+    e.respondWith(fetch(e.request).catch(() => new Response(JSON.stringify({ error: "Offline" }), { status: 503 })));
     return;
   }
 
-  // Static Assets -> Cache First
+  // Cache static UI assets
   e.respondWith(
     caches.match(e.request).then((cached) => {
       return cached || fetch(e.request).then(response => {
@@ -67,11 +37,7 @@ self.addEventListener('fetch', (e) => {
       });
     })
   );
-});
-
-// Background Sync for Price Checking
-self.addEventListener('sync', (e) => {
-  if (e.tag === 'price-check') {
+});  if (e.tag === 'price-check') {
     e.waitUntil(performBackgroundPriceCheck());
   }
 });
