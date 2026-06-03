@@ -1,11 +1,10 @@
-<!-- FILE 3: index.html -->
 <!DOCTYPE html>
 <html lang="en-IN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#00D68F">
-  <title>Nifty Oracle Pro - LIVE</title>
+  <title>Nifty Oracle Pro - TRUE LIVE</title>
   <link rel="manifest" href="./manifest.json">
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -14,31 +13,32 @@
     :root {
       --bg-primary: #0B0C10; --bg-surface: #1A1D27; --bg-elevated: #242838;
       --border: #2E3347; --text-primary: #FFFFFF; --text-secondary: #8892A4;
-      --text-disabled: #4A5568; --accent-bull: #00D68F; --accent-bear: #FF4757;
+      --accent-bull: #00D68F; --accent-bear: #FF4757;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     body { font-family: -apple-system, Roboto, sans-serif; background: var(--bg-primary); color: var(--text-primary); }
     
     .app-container { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    .content-area { flex: 1; overflow-y: auto; padding-bottom: 70px; }
-    .header { padding: 16px; position: sticky; top: 0; background: var(--bg-primary); z-index: 100; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-    .card { background: var(--bg-surface); border-radius: 12px; padding: 16px; margin: 12px 16px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .content-area { flex: 1; overflow-y: auto; padding-bottom: 20px; }
     
-    .text-bull { color: var(--accent-bull); } .text-bear { color: var(--accent-bear); }
-    .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; border: 1px solid currentColor; }
+    .header { padding: 16px; background: var(--bg-primary); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .card { background: var(--bg-surface); border-radius: 12px; padding: 16px; margin: 12px 16px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: background-color 0.3s; }
     
-    .stock-card { display: flex; flex-direction: column; gap: 8px; position: relative; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid currentColor; }
     .stock-header { display: flex; justify-content: space-between; align-items: flex-start; }
     .stock-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
-    .stock-price { font-size: 18px; font-weight: bold; text-align: right; }
+    .stock-price { font-size: 22px; font-weight: bold; text-align: right; font-variant-numeric: tabular-nums; transition: color 0.2s; }
     
-    .progress-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin: 8px 0; }
-    .progress-fill { height: 100%; background: var(--accent-bull); transition: width 0.3s; }
+    /* True Live Terminal Flashes */
+    .flash-up { animation: flashGreen 0.8s ease-out; }
+    .flash-down { animation: flashRed 0.8s ease-out; }
+    @keyframes flashGreen { 0% { background-color: rgba(0, 214, 143, 0.3); } 100% { background-color: var(--bg-surface); } }
+    @keyframes flashRed { 0% { background-color: rgba(255, 71, 87, 0.3); } 100% { background-color: var(--bg-surface); } }
     
-    .live-indicator { display: inline-block; width: 8px; height: 8px; background: red; border-radius: 50%; margin-right: 6px; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    .live-dot { display: inline-block; width: 10px; height: 10px; background: #00D68F; border-radius: 50%; margin-right: 6px; animation: pulse 1s infinite; box-shadow: 0 0 8px #00D68F; }
+    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
     
-    .error-box { background: rgba(255, 71, 87, 0.1); border: 1px solid var(--accent-bear); padding: 12px; margin: 16px; border-radius: 8px; color: #fff; font-size: 13px; }
+    .micro-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; text-align: center; }
   </style>
 </head>
 <body>
@@ -47,31 +47,225 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // 1. QUANT ENGINE WORKER (Calculates actual real indicators)
-    const workerLogic = `
-      function calcEMA(data, period) {
-        if(data.length < period) return data[data.length-1];
-        const k = 2 / (period + 1);
-        let ema = data[0];
-        for(let i = 1; i < data.length; i++) { ema = (data[i] * k) + (ema * (1 - k)); }
-        return ema;
-      }
-      function calcRSI(prices, p = 14) {
-        if(prices.length < p) return 50;
-        let gains = 0, losses = 0;
-        for(let i = prices.length - p; i < prices.length; i++) {
-          let diff = prices[i] - prices[i - 1];
-          if(diff > 0) gains += diff; else losses -= diff;
+    // --- 1. THE INSTITUTIONAL WEBSOCKET DECODER ---
+    // Decodes the raw binary data stream straight from the exchange
+    const decodeTick = (base64) => {
+      try {
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+        let i = 0, data = {};
+        while (i < bytes.length) {
+          let tag = bytes[i++];
+          let type = tag & 7;
+          let field = tag >> 3;
+
+          if (type === 0) { // Varint
+            let val = 0, shift = 0;
+            while (bytes[i] & 0x80) { if(shift<31) val |= (bytes[i] & 0x7F) << shift; i++; shift += 7; }
+            if(shift<31) val |= bytes[i] << shift; i++;
+            if (field === 9) data.volume = val;
+          } else if (type === 1) { i += 8; } 
+          else if (type === 2) { // String
+            let len = bytes[i++]; let str = "";
+            for(let j=0; j<len; j++) str += String.fromCharCode(bytes[i++]);
+            if (field === 1) data.id = str;
+          } else if (type === 5) { // Float
+            let view = new DataView(bytes.buffer, i, 4);
+            let val = view.getFloat32(0, true);
+            i += 4;
+            if (field === 2) data.price = val;
+            if (field === 8) data.changePercent = val;
+          } else { break; }
         }
-        if(losses === 0) return 100;
-        let rs = (gains/p) / (losses/p);
-        return 100 - (100 / (1 + rs));
+        return data;
+      } catch(e) { return null; }
+    };
+
+    // --- 2. SEC-TO-SEC MICRO ANALYSIS ENGINE ---
+    const calculateMicroTrend = (ticks) => {
+      if(ticks.length < 5) return { rsi: 50, signal: 'WAITING', color: '#718096' };
+      
+      let gains = 0, losses = 0;
+      for(let i = 1; i < ticks.length; i++) {
+        let diff = ticks[i] - ticks[i-1];
+        if(diff > 0) gains += diff; else losses -= diff;
       }
-      function calculateScore(prices, volumes) {
-        if(!prices || prices.length < 20) return { score: 50, signal: 'WAITING FOR DATA', color: '#718096', rsi: 0 };
+      
+      let rs = losses === 0 ? 100 : (gains / ticks.length) / (losses / ticks.length);
+      let rsi = 100 - (100 / (1 + rs));
+      
+      let signal = 'HOLD', color = '#718096';
+      if(rsi > 70) { signal = 'SCALP SELL'; color = '#FF4757'; }
+      else if(rsi < 30) { signal = 'SCALP BUY'; color = '#00D68F'; }
+      else if(rsi > 55) { signal = 'TREND UP'; color = '#00B37A'; }
+      else if(rsi < 45) { signal = 'TREND DOWN'; color = '#E84393'; }
+
+      return { rsi: Math.round(rsi), signal, color };
+    };
+
+    const App = () => {
+      // Manage state for the UI
+      const [marketData, setMarketData] = useState({});
+      const [wsStatus, setWsStatus] = useState('Connecting...');
+      
+      // Store exact ticks in memory (won't slow down UI)
+      const dataRef = useRef({});
+      const tickHistory = useRef({});
+
+      const symbols = {
+        '^NSEI': 'NIFTY 50',
+        '^NSEBANK': 'BANK NIFTY',
+        'RELIANCE.NS': 'RELIANCE',
+        'TCS.NS': 'TCS',
+        'INFY.NS': 'INFOSYS',
+        'HDFCBANK.NS': 'HDFC BANK',
+        'SBIN.NS': 'SBI'
+      };
+
+      useEffect(() => {
+        let ws;
         
-        const currentPrice = prices[prices.length - 1];
-        let score = 0;
+        const connect = () => {
+          setWsStatus('Connecting to Exchange...');
+          ws = new WebSocket('wss://streamer.finance.yahoo.com');
+
+          ws.onopen = () => {
+            setWsStatus('LIVE WEBSOCKET ACTIVE');
+            // Subscribe to Indian markets
+            ws.send(JSON.stringify({ subscribe: Object.keys(symbols) }));
+          };
+
+          ws.onmessage = (event) => {
+            const decoded = decodeTick(event.data);
+            if (!decoded || !decoded.id || !decoded.price) return;
+            
+            const sym = decoded.id;
+            const newPrice = decoded.price;
+            
+            // Initialize arrays if missing
+            if(!tickHistory.current[sym]) tickHistory.current[sym] = [];
+            if(!dataRef.current[sym]) dataRef.current[sym] = {};
+
+            const oldPrice = dataRef.current[sym].price || newPrice;
+            const direction = newPrice > oldPrice ? 'up' : newPrice < oldPrice ? 'down' : 'flat';
+            
+            // Push to history (Keep last 50 ticks for micro-analysis)
+            tickHistory.current[sym].push(newPrice);
+            if(tickHistory.current[sym].length > 50) tickHistory.current[sym].shift();
+
+            // Run sec-to-sec analysis
+            const microAnalysis = calculateMicroTrend(tickHistory.current[sym]);
+
+            // Update memory reference
+            dataRef.current[sym] = {
+              name: symbols[sym],
+              price: newPrice,
+              changePct: decoded.changePercent || dataRef.current[sym].changePct || 0,
+              direction,
+              microAnalysis,
+              lastUpdate: Date.now()
+            };
+          };
+
+          ws.onclose = () => {
+            setWsStatus('Connection lost. Reconnecting...');
+            setTimeout(connect, 2000);
+          };
+        };
+
+        connect();
+
+        // 3. PERFORMANCE HACK FOR LOW-END PHONES:
+        // We receive potentially hundreds of ticks per second. 
+        // Updating React state on every tick will freeze an ₹8,000 Android phone.
+        // Instead, we batch update the UI at 10 Frames Per Second.
+        const uiInterval = setInterval(() => {
+          setMarketData({ ...dataRef.current });
+        }, 100);
+
+        return () => {
+          clearInterval(uiInterval);
+          if (ws) ws.close();
+        };
+      }, []);
+
+      return (
+        <div className="app-container">
+          <div className="header">
+            <div>
+              <div style={{fontWeight: 'bold', fontSize: 18}}>Nifty Oracle <span style={{color: '#00D68F'}}>PRO</span></div>
+              <div style={{fontSize: 11, color: wsStatus.includes('LIVE') ? '#00D68F' : '#FF9F43', marginTop: 4, display: 'flex', alignItems: 'center'}}>
+                {wsStatus.includes('LIVE') && <span className="live-dot"></span>}
+                {wsStatus}
+              </div>
+            </div>
+            <div style={{fontSize: 20}}>⚡</div>
+          </div>
+
+          <div className="content-area">
+            {Object.keys(marketData).length === 0 && wsStatus.includes('LIVE') && (
+              <div style={{padding: 40, textAlign: 'center', color: 'var(--text-secondary)'}}>
+                Waiting for the first market tick...<br/>
+                <span style={{fontSize: 11}}>(If market is closed, prices won't move)</span>
+              </div>
+            )}
+
+            {Object.keys(symbols).map(sym => {
+              const stock = marketData[sym];
+              if(!stock) return null; // Hide until first tick received
+              
+              const isUp = stock.changePct >= 0;
+              const flashClass = stock.direction === 'up' ? 'flash-up' : stock.direction === 'down' ? 'flash-down' : '';
+              const analysis = stock.microAnalysis;
+
+              return (
+                <div key={sym} className={`card ${flashClass}`} style={{ animationDuration: '0.5s' }}>
+                  <div className="stock-header">
+                    <div>
+                      <div className="stock-title">{stock.name}</div>
+                      <div className="badge" style={{color: analysis.color, borderColor: analysis.color, marginTop: 4}}>
+                        {analysis.signal}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="stock-price" style={{color: stock.direction === 'up' ? '#00D68F' : stock.direction === 'down' ? '#FF4757' : 'white'}}>
+                        ₹{stock.price.toFixed(2)}
+                      </div>
+                      <div style={{color: isUp ? '#00D68F' : '#FF4757', fontSize: 13, fontWeight: 'bold', textAlign: 'right', marginTop: 2}}>
+                        {isUp ? '▲' : '▼'} {Math.abs(stock.changePct).toFixed(2)}%
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="micro-grid">
+                    <div>
+                      <div style={{color: 'var(--text-secondary)'}}>Tick RSI</div>
+                      <div style={{fontWeight: 'bold', color: analysis.rsi > 70 ? '#FF4757' : analysis.rsi < 30 ? '#00D68F' : '#FFF'}}>{analysis.rsi}</div>
+                    </div>
+                    <div>
+                      <div style={{color: 'var(--text-secondary)'}}>Ticks Analysed</div>
+                      <div style={{fontWeight: 'bold'}}>{tickHistory.current[sym]?.length || 0}/50</div>
+                    </div>
+                    <div>
+                      <div style={{color: 'var(--text-secondary)'}}>Last Tick</div>
+                      <div style={{fontWeight: 'bold'}}>{new Date(stock.lastUpdate).toLocaleTimeString('en-IN')}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>        let score = 0;
         
         // REAL EMA Calculations
         const ema20 = calcEMA(prices, 20);
